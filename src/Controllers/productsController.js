@@ -34,26 +34,26 @@ class ProductsController {
 
     async getProductById(id) {
         const products = await this.getProducts();
-        const product = products.find(p => p.id === parseInt(id));
+        const product = products.find(p => p.productId === parseInt(id));
         if (!product) {
-            throw new NotFoundError(`No se encontró el producto ${id}`);
+            throw new NotFoundError(`Product with id ${id} not found`);
         }
         return product;
     }
 
     async addProduct(productData) {
         if (!productData.title || !productData.price) {
-            throw new BadRequestError('Título y precio son obligatorios');
+            throw new BadRequestError('Title and price are required');
         }
         const products = await this.getProducts();
 
         if (products.some(p => p.title.toLowerCase() === productData.title.toLowerCase())) {
-            throw new ConflictError(`Ya existe un producto con el título '${productData.title}'`);
+            throw new ConflictError(`Product with title '${productData.title}' already exists`);
         }
 
-        const maxId = products.reduce((max, p) => (p.id > max ? p.id : max), 0);
+        const maxId = products.reduce((max, p) => (p.productId > max ? p.productId : max), 0);
         const newProduct = {
-            id: maxId + 1,
+            productId: maxId + 1,
             ...productData,
         };
         products.push(newProduct);
@@ -64,17 +64,17 @@ class ProductsController {
     async updateProduct(id, updatedData) {
         const products = await this.getProducts();
         const productId = parseInt(id);
-        const index = products.findIndex(p => p.id === productId);
+        const index = products.findIndex(p => p.productId === productId);
 
         if (index === -1) {
-            throw new NotFoundError(`No se encontró el producto ${id}`);
+            throw new NotFoundError(`Product with id ${id} not found`);
         }
 
-        if (updatedData.title && products.some(p => p.title.toLowerCase() === updatedData.title.toLowerCase() && p.id !== productId)) {
-            throw new ConflictError(`Ya existe un producto con el título '${updatedData.title}'`);
+        if (updatedData.title && products.some(p => p.title.toLowerCase() === updatedData.title.toLowerCase() && p.productId !== productId)) {
+            throw new ConflictError(`Product with title '${updatedData.title}' already exists`);
         }
-
-        products[index] = { ...products[index], ...updatedData, id: productId };
+        
+        products[index] = { ...products[index], ...updatedData, productId: productId };
         await this._saveProducts(products);
         return products[index];
     }
@@ -84,10 +84,10 @@ class ProductsController {
         const productId = parseInt(id);
         const initialLength = products.length;
 
-        products = products.filter(p => p.id !== productId);
+        products = products.filter(p => p.productId !== productId);
 
         if (products.length === initialLength) {
-            throw new NotFoundError(`No se encontró el producto ${id}`);
+            throw new NotFoundError(`Product with id ${id} not found`);
         }
 
         await this._saveProducts(products);
